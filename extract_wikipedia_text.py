@@ -4,7 +4,7 @@ import string
 import json
 import re
 
-# List of Wikipedia page titles that you want to extract
+# Example list of Wikipedia page titles
 page_titles = ['Orange (fruit)', 'Orange S.A.', 'Orange (colour)']
 
 # Download NLTK tokenizer
@@ -25,8 +25,21 @@ def get_wikipedia_page(title):
         text = page.content
         
         # Normalize special characters
-        text = text.replace('\u2014', ' ')  # Replace em dash with space
-        text = text.replace('\u00d7', 'x')  # Replace multiplication sign with 'x'
+        replacements = {
+            '\u2014': ' ',  # Em Dash
+            '\u2013': ' ',  # En Dash
+            '\u00d7': 'x',  # Multiplication Sign
+            '\u00b0': ' degrees',  # Degree Symbol
+            '\u00a9': '(c)',  # Copyright Symbol
+            '\u00ae': '®',  # Registered Trademark
+            '\u00a7': '#',  # Section Sign
+            '\u00b6': '*',  # Paragraph Sign
+            '\u2022': '*',  # Bullet
+            '\u2026': '...',  # Ellipsis
+        }
+        
+        for char, replacement in replacements.items():
+            text = text.replace(char, replacement)
         
         # Remove section headers and other unwanted tokens
         text = re.sub(r'={2,}', '', text)  # Remove '==' section headers
