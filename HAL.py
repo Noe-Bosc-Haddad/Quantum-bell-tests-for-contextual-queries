@@ -41,18 +41,19 @@ def Hal_construct(input_array:np.ndarray, window_size:int = 10) -> Tuple[np.ndar
     return hal, word2int, int2word
 
 
-def json_extractor(path:str):
+def json_extractor(path:str) -> list[list[str]]:
     with open(path) as input_file :
         document_list = json.load(input_file)
-    return iter(document_list)
+    return document_list
 
 def makecorpushals(path:str, window_size : int =10 ) -> None:
     documentiterator = json_extractor(path)
     dump = {}
     i = 0
     for document in documentiterator:
-        (HAL, word2int, int2word) = Hal_construct(document, window_size)
-        dump["document{i}"] = {"HAL" : HAL.tolist(), "word2int":word2int, "int2word":int2word}
+        (HAL, word2int, int2word) = Hal_construct(np.array(document), window_size)
+        dump["document{}".format(i)] = {"HAL" : HAL.tolist(), "word2int":word2int, "int2word":int2word}
+        i+=1
     with open("./hal_matrices.json", 'w') as halw :
         json.dump(dump, halw)
 
