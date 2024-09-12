@@ -11,6 +11,7 @@ page_titles = ['Orange (fruit)', 'Orange S.A.', 'Orange (colour)']
 nltk.download('punkt')
 
 # Define your custom user-agent
+global custom_user_agent
 custom_user_agent = "Manalorca/BellQuery (matthieu.deschamps1618@gmail.com)"
 
 # Set the custom user-agent for Wikipedia
