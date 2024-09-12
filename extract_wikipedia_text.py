@@ -23,23 +23,9 @@ def get_wikipedia_page(title):
         page = wikipedia.page(title)
         # Clean the page content
         text = page.content
-        
-        # Normalize special characters
-        replacements = {
-            '\u2014': ' ',  # Em Dash
-            '\u2013': ' ',  # En Dash
-            '\u00d7': 'x',  # Multiplication Sign
-            '\u00b0': ' degrees',  # Degree Symbol
-            '\u00a9': '(c)',  # Copyright Symbol
-            '\u00ae': '®',  # Registered Trademark
-            '\u00a7': '#',  # Section Sign
-            '\u00b6': '*',  # Paragraph Sign
-            '\u2022': '*',  # Bullet
-            '\u2026': '...',  # Ellipsis
-        }
-        
-        for char, replacement in replacements.items():
-            text = text.replace(char, replacement)
+
+        # Normalize Unicode characters to their closest ASCII equivalent
+        text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
         
         # Remove section headers and other unwanted tokens
         text = re.sub(r'={2,}', '', text)  # Remove '==' section headers
