@@ -3,12 +3,24 @@ import matplotlib.pyplot as plt
 import json
 
 debug = False
-
+global WASTEWORDS
+WASTEWORDS = [
+    "the", "a", "an", "this", "that", "these", "those",
+    "he", "she", "they", "it", "we", "you", "him", "her", "them", "us",
+    "I", "me", "myself", "himself", "herself", "themselves", "itself",
+    "and", "or", "but", "so", "yet", "for", "nor",
+    "in", "on", "at", "by", "with", "about", "into", "over", "under", "between", "through",
+    "is", "are", "was", "were", "be", "being", "been", "have", "has", "had", 
+    "do", "does", "did", "will", "would", "should", "can", "could", "may", "might", "must", "shall",
+    "very", "really", "just", "too", "quite", "almost", "nearly", "always", "never", "sometimes", "often",
+    "not", "no", "yes", "all", "some", "any", "each", "every", "both", "either", "neither"
+]
 def create_HAL_matrix(document):
-    words = []
-    for word in document:
-        if word not in words:
-            words.append(word)
+    words = np.unique(np.array((document))) #creates unique word vector
+    for waste in WASTEWORDS: #delete waste words
+        words = np.delete(words, np.where(words == waste))
+
+    
     hal_dict_matrix = {}
     for word in words:
         hal_dict_matrix[word]={}
@@ -23,10 +35,12 @@ def fill_HAL_matrix(document,hal_dict_matrix,window_size):
     for i in range(len_doc):
         word = document[i]
         if i+window_size >=len_doc:
-            window_size_updated += -1
-        for k in range(1,window_size_updated+1):
-            word2 = document[i+k]
-            hal_dict_matrix[word][word2] += window_size-k+1
+           window_size_updated += -1
+        if not (word in WASTEWORDS) :
+            for k in range(1,window_size_updated+1):
+                    word2 = document[i+k]
+                    if not (word2 in WASTEWORDS):
+                         hal_dict_matrix[word][word2] += window_size-k+1
     return hal_dict_matrix
 
 def hal_dict_to_matrix(hal_dict_matrix):
@@ -85,25 +99,25 @@ def B_matrices(base_vector1,word_vector_normed2):
 
 def esp(alpha,alpha_ort,matrix):
     document_vector = np.array([alpha,alpha_ort])
-    return np.dot(document_vector, np.matmul(matrix,document_vector))
+    return np.dot(document_vector, np.dot(matrix,document_vector))
 
 def S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort):
-    esp_A_Bplus = esp(alpha,alpha_ort,np.matmul(A_mat,B_mat_plus))
+    esp_A_Bplus = esp(alpha,alpha_ort,np.dot(A_mat,B_mat_plus))
     if debug:
         print("esp_A_Bplus")
         print(esp_A_Bplus)
         print(' ')
-    esp_Ax_Bplus = esp(alpha,alpha_ort,np.matmul(A_mat_x,B_mat_plus))
+    esp_Ax_Bplus = esp(alpha,alpha_ort,np.dot(A_mat_x,B_mat_plus))
     if debug:
         print("esp_Ax_Bplus")
         print(esp_Ax_Bplus)
         print(' ')
-    esp_A_Bminus = esp(alpha,alpha_ort,np.matmul(A_mat,B_mat_minus))
+    esp_A_Bminus = esp(alpha,alpha_ort,np.dot(A_mat,B_mat_minus))
     if debug:
         print("esp_A_Bminus")
         print(esp_A_Bminus)
         print(' ')
-    esp_Ax_Bminus = esp(alpha,alpha_ort,np.matmul(A_mat_x,B_mat_minus))
+    esp_Ax_Bminus = esp(alpha,alpha_ort,np.dot(A_mat_x,B_mat_minus))
     if debug:
         print("esp_Ax_Bminus")
         print(esp_Ax_Bminus)
@@ -202,9 +216,10 @@ def Bell(document, word1, word2, min, max):
 #with open('wikipedia_documents_cleaned.json', 'r') as f:
 #    corpus = json.load(f)
 
-word1 = "droit"
-word2 = "plusieurs"
+word1 = "government"
+word2 = "laws"
 
+'''
 document = [
     "Le", "droit", "du", "sol", "en", "France", "est", "un", "principe", "juridique", "selon", "lequel", 
     "une", "personne", "née", "sur", "le", "territoire", "français", "peut", "acquérir", "la", "nationalité", 
@@ -217,6 +232,10 @@ document = [
     "certaines", "conditions", "Le", "droit", "du", "sol", "est", "au", "cœur", "des", "débats", "sur", 
     "l'immigration", "et", "la", "nationalité", "en", "France"
 ]
+'''
+with open('./json_data/wikipedia_documents_cleaned.json') as file :
+    document = json.load(file)[0][0:200]
+
 
 
 def print_graph(document, word1, word2, min, max):
@@ -225,7 +244,7 @@ def print_graph(document, word1, word2, min, max):
     plt.xlabel('Window size w')
     plt.ylabel('Bell parameter S')
     plt.title('Bell parameter as a function of window size w')
-    plt.savefig('Bell_Parameter')
+    plt.savefig('./fig/Bell_Parameter')
     plt.show()
     
 print_graph(document, word1, word2, 1, 100)
