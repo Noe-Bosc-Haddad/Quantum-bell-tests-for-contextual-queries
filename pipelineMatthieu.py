@@ -80,7 +80,6 @@ def project_doc_onto_base(base_vector1,base_vector2,document_vector):
     alpha = np.dot(base_vector1,document_vector)
     alpha_ort = np.dot(base_vector2,document_vector)
     normalisation_factor = np.sqrt(alpha**2+alpha_ort**2)
-    print(np.linalg.norm(np.array([alpha/normalisation_factor,alpha_ort/normalisation_factor])))
     return alpha/normalisation_factor,alpha_ort/normalisation_factor
 
 def B_matrices(base_vector1,word_vector_normed2):
@@ -246,7 +245,7 @@ def print_graph(document, word1, word2, min, max):
     ax.plot(X, np.ones(len(X))*2, linestyle = "dashdot", color = "black")
     ax.plot(X, np.ones(len(X))*2*np.sqrt(2), linestyle = "dotted", color = "black")
      
-    ax.set_ylim(0, 2*np.sqrt(2))
+    ax.set_ylim(0, 2*np.sqrt(2)+0.1)
     ax.set_xlabel('Window size w')
     ax.set_ylabel('Bell parameter S')
     ax.set_title('Bell parameter as a function of window size w')
