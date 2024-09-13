@@ -46,7 +46,7 @@ def json_extractor(path:str) -> list[list[str]]:
         document_list = json.load(input_file)
     return document_list
 
-def makecorpushals(path:str, window_size : int =10 ) -> None:
+def makecorpushals(path:str, window_size : int =10, target: str = "./json_data/hal_matrices.json" ) -> None:
     documentiterator = json_extractor(path)
     dump = {}
     i = 0
@@ -54,7 +54,7 @@ def makecorpushals(path:str, window_size : int =10 ) -> None:
         (HAL, word2int, int2word) = Hal_construct(np.array(document), window_size)
         dump["document{}".format(i)] = {"HAL" : HAL.tolist(), "word2int":word2int, "int2word":int2word}
         i+=1
-    with open("./json_data/hal_matrices.json", 'w') as halw :
+    with open(target, 'w') as halw :
         json.dump(dump, halw)
 
 
@@ -63,4 +63,3 @@ def makecorpushals(path:str, window_size : int =10 ) -> None:
 
 if __name__ == "__main__" :
     input = np.array(["the", "dog", 'runs', 'through', 'the', 'backyard', 'the', 'backyard', 'is','no','more', 'clean'])
-    makecorpushals('./wikipedia_documents_cleaned.json')
