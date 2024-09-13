@@ -7,7 +7,17 @@ import json
 def Hal_construct(input_array:np.ndarray, window_size:int = 10) -> Tuple[np.ndarray, dict, dict]:
     ## get word vec
     unique_words = np.unique(input_array)
-    WASTEWORDS = ["the","a","their","theirs","it","its", "they","an", "and", "or"]
+    WASTEWORDS = [
+    "the", "a", "an", "this", "that", "these", "those",
+    "he", "she", "they", "it", "we", "you", "him", "her", "them", "us",
+    "I", "me", "myself", "himself", "herself", "themselves", "itself",
+    "and", "or", "but", "so", "yet", "for", "nor",
+    "in", "on", "at", "by", "with", "about", "into", "over", "under", "between", "through",
+    "is", "are", "was", "were", "be", "being", "been", "have", "has", "had", 
+    "do", "does", "did", "will", "would", "should", "can", "could", "may", "might", "must", "shall",
+    "very", "really", "just", "too", "quite", "almost", "nearly", "always", "never", "sometimes", "often",
+    "not", "no", "yes", "all", "some", "any", "each", "every", "both", "either", "neither"
+    ]
     ## destroy waste words
     for waste in WASTEWORDS :
         unique_words = np.delete(unique_words, np.where(unique_words == waste))
@@ -27,7 +37,6 @@ def Hal_construct(input_array:np.ndarray, window_size:int = 10) -> Tuple[np.ndar
     unique_words = False
     # completing HAL
     for i in range(len(input_array)) :
-
         if not input_array[i] in WASTEWORDS :
             j = i + 1
             while j < len(input_array) and j-i<=window_size:
