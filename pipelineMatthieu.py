@@ -77,10 +77,10 @@ def base_from_word_vectors(word_vector_normalised,word_vector_normalised2):
     return word_vector_normalised,word_vector_normalised_ort
 
 def project_doc_onto_base(base_vector1,base_vector2,document_vector):
-    
     alpha = np.dot(base_vector1,document_vector)
     alpha_ort = np.dot(base_vector2,document_vector)
     normalisation_factor = np.sqrt(alpha**2+alpha_ort**2)
+    print(np.linalg.norm(np.array([alpha/normalisation_factor,alpha_ort/normalisation_factor])))
     return alpha/normalisation_factor,alpha_ort/normalisation_factor
 
 def B_matrices(base_vector1,word_vector_normed2):
@@ -147,7 +147,8 @@ def Bell_l(document, word1, word2, window_size):
         print('words_list')
         print(words_list)
         print(' ')
-    hal_matrix_symmetric= hal_to_symmetric(hal_matrix)
+    # hal_matrix_symmetric= hal_to_symmetric(hal_matrix)
+    hal_matrix_symmetric = hal_matrix   #testing 
     if debug:
         print('hal_matrix_symmetric')
         print(hal_matrix_symmetric)
@@ -193,7 +194,7 @@ def Bell_l(document, word1, word2, window_size):
         print('alpha_ort')
         print(alpha_ort)
         print(' ')
-    B_mat_plus, B_mat_minus = B_matrices(base_vector_1,word_vector_normed_2)
+    B_mat_plus, B_mat_minus = B_matrices(word_vector_normed_1,word_vector_normed_2)
     if debug:
         print('B_mat_plus')
         print(B_mat_plus)
@@ -217,7 +218,7 @@ def Bell(document, word1, word2, min, max):
 #    corpus = json.load(f)
 
 word1 = "government"
-word2 = "laws"
+word2 = "new" 
 
 '''
 document = [
@@ -234,18 +235,23 @@ document = [
 ]
 '''
 with open('./json_data/wikipedia_documents_cleaned.json') as file :
-    document = json.load(file)[0][0:200]
+    document = json.load(file)[0]
 
 
 
 def print_graph(document, word1, word2, min, max):
     X, Y = Bell(document, word1, word2, min, max)
-    plt.plot(X, Y, marker='o')
-    plt.xlabel('Window size w')
-    plt.ylabel('Bell parameter S')
-    plt.title('Bell parameter as a function of window size w')
-    plt.savefig('./fig/Bell_Parameter')
-    plt.show()
-    
+    fig, ax = plt.subplots(1,1)
+    ax.plot(X, Y, marker='o')
+    ax.plot(X, np.ones(len(X))*2, linestyle = "dashdot", color = "black")
+    ax.plot(X, np.ones(len(X))*2*np.sqrt(2), linestyle = "dotted", color = "black")
+     
+    ax.set_ylim(0, 2*np.sqrt(2))
+    ax.set_xlabel('Window size w')
+    ax.set_ylabel('Bell parameter S')
+    ax.set_title('Bell parameter as a function of window size w')
+    fig.savefig('./fig/Bell_Parameter_main')
+
+     
 print_graph(document, word1, word2, 1, 100)
 
