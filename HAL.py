@@ -7,7 +7,7 @@ import json
 def Hal_construct(input_array:np.ndarray, window_size:int = 10) -> Tuple[np.ndarray, dict, dict]:
     ## get word vec
     unique_words = np.unique(input_array)
-    WASTEWORDS = ["the","a","their","theirs","it","its", "they","an"]
+    WASTEWORDS = ["the","a","their","theirs","it","its", "they","an", "and", "or"]
     ## destroy waste words
     for waste in WASTEWORDS :
         unique_words = np.delete(unique_words, np.where(unique_words == waste))
@@ -54,7 +54,7 @@ def makecorpushals(path:str, window_size : int =10 ) -> None:
         (HAL, word2int, int2word) = Hal_construct(np.array(document), window_size)
         dump["document{}".format(i)] = {"HAL" : HAL.tolist(), "word2int":word2int, "int2word":int2word}
         i+=1
-    with open("./hal_matrices.json", 'w') as halw :
+    with open("./json_data/hal_matrices.json", 'w') as halw :
         json.dump(dump, halw)
 
 

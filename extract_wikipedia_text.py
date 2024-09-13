@@ -47,7 +47,7 @@ def get_pages(page_titles:list[str]) -> None :
     documents = [get_wikipedia_page(title) for title in page_titles]
 
     # Save the result to a JSON file
-    with open('wikipedia_documents_cleaned.json', 'w') as f:
+    with open('json_data/wikipedia_documents_cleaned.json', 'w') as f:
         json.dump(documents, f, indent=4)
 
     print("Documents saved to 'wikipedia_documents_cleaned.json'")
