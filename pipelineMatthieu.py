@@ -216,8 +216,8 @@ def Bell(document, word1, word2, min, max):
 #with open('wikipedia_documents_cleaned.json', 'r') as f:
 #    corpus = json.load(f)
 
-word1 = "government"
-word2 = "new" 
+word1 = "united"
+word2 = "states" 
 
 '''
 document = [
@@ -252,5 +252,5 @@ def print_graph(document, word1, word2, min, max):
     fig.savefig('./fig/Bell_Parameter_main')
 
      
-print_graph(document, word1, word2, 1, 100)
+#print_graph(document, word1, word2, 1, 100)
 
