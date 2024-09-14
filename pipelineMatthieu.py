@@ -100,7 +100,7 @@ def esp(alpha,alpha_ort,matrix):
     document_vector = np.array([alpha,alpha_ort])
     return np.dot(document_vector, np.dot(matrix,document_vector))
 
-def S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort):
+def S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort, method):
     esp_A_Bplus = esp(alpha,alpha_ort,np.dot(A_mat,B_mat_plus))
     if debug:
         print("esp_A_Bplus")
@@ -124,9 +124,12 @@ def S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort):
         print("S_query")
         print(np.abs(esp_A_Bplus + esp_Ax_Bplus) + np.abs(esp_A_Bminus - esp_Ax_Bminus))
         print(' ')
-    return np.abs(esp_A_Bplus + esp_Ax_Bplus) + np.abs(esp_A_Bminus - esp_Ax_Bminus)
+    if method == 0:
+        return np.abs(esp_A_Bplus) + abs(esp_Ax_Bplus) + abs(esp_A_Bminus) - abs(esp_Ax_Bminus)
+    elif method==1:
+        return np.abs(esp_A_Bplus + esp_Ax_Bplus) + abs(esp_A_Bminus - esp_Ax_Bminus)
 
-def Bell_l(document, word1, word2, window_size):
+def Bell_l(document, word1, word2, window_size, method):
     if debug:
         print(' ')
         print('-------------------------------------')
@@ -203,14 +206,14 @@ def Bell_l(document, word1, word2, window_size):
         print(' ')
     A_mat = [[1,0],[0,-1]]
     A_mat_x = [[0,1],[1,0]]
-    return S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort)
+    return S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort, method)
 
-def Bell(document, word1, word2, min, max):
+def Bell(document, word1, word2, min, max, method):
     X = []
     Y = []
     for l in range(min, max):
         X.append(l)
-        Y.append(Bell_l(document, word1, word2, l))
+        Y.append(Bell_l(document, word1, word2, l, method))
     return X, Y
 
 #with open('wikipedia_documents_cleaned.json', 'r') as f:
@@ -238,18 +241,31 @@ with open('./json_data/wikipedia_documents_cleaned.json') as file :
 
 
 
-def print_graph(document, word1, word2, min, max):
-    X, Y = Bell(document, word1, word2, min, max)
-    fig, ax = plt.subplots(1,1)
-    ax.plot(X, Y, marker='o')
-    ax.plot(X, np.ones(len(X))*2, linestyle = "dashdot", color = "black")
-    ax.plot(X, np.ones(len(X))*2*np.sqrt(2), linestyle = "dotted", color = "black")
-     
-    ax.set_ylim(0, 2*np.sqrt(2)+0.1)
-    ax.set_xlabel('Window size w')
-    ax.set_ylabel('Bell parameter S')
-    ax.set_title('Bell parameter as a function of window size w')
-    fig.savefig('./fig/Bell_Parameter_main')
+def print_graph(document, word1, min, max):
+    words = ["fruit",  "rutaceae", "trees"]
+    for method in range(2):
+        for word2 in words:
+            X, Y = Bell(document, "orange", word2, min, max, method)
+            if word2=="fruit":
+                if method==0:
+                    plt.plot(X, Y, marker='o', color='orange')
+                else:
+                    plt.plot(X, Y, marker=',', color='orange', linestyle='dotted')
+            elif word2=="rutaceae":
+                if method==0:
+                    plt.plot(X, Y, marker='o', color='black')
+                else:
+                    plt.plot(X, Y, marker=',', color='black', linestyle='dotted')
+            elif word2=="trees":
+                if method==0:
+                    plt.plot(X, Y, marker='o', color='#b00a38')
+                else:
+                    plt.plot(X, Y, marker=',', color='#b00a38', linestyle='dotted')
+    plt.xlabel('Window size w')
+    plt.ylabel('Bell parameter S')
+    plt.title('Bell parameter as a function of window size w')
+    plt.savefig('Bell_Parameter')
+    plt.show()
 
      
 #print_graph(document, word1, word2, 1, 100)
