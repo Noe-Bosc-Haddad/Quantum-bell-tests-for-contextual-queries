@@ -1,0 +1,172 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import json
+
+def tf(word, doc) :
+    N=0
+    for word_2 in doc :
+        if word_2==word:
+            N+=1
+    return N/len(doc)
+
+def idf(word,corpus):
+    N=0
+    for doc in corpus :
+        if word in doc:
+            N+=1
+    return np.log(len(corpus)/N)
+
+def tfidf(word, doc, corpus) :
+    return tf(word, doc)*idf(word, corpus)
+
+
+
+def create_HAL_matrix(document):
+    words = []
+    for word in document:
+        if word not in words:
+            words.append(word)
+    hal_dict_matrix = {}
+    for word in words:
+        hal_dict_matrix[word]={}
+        for word2 in words:
+            hal_dict_matrix[word][word2] = 0
+        
+    return hal_dict_matrix
+
+def fill_HAL_matrix(document,hal_dict_matrix,window_size):
+    window_size_updated = window_size
+    len_doc = len(document)
+    for i in range(len_doc):
+        word = document[i]
+        if i+window_size >=len_doc:
+            window_size_updated += -1
+        for k in range(1,window_size_updated+1):
+            word2 = document[i+k]
+            hal_dict_matrix[word][word2] += window_size - k +1
+    return hal_dict_matrix
+
+def hal_dict_to_matrix(hal_dict_matrix):
+    hal_matrix = []
+    for i in range(len(hal_dict_matrix.keys())):
+        hal_matrix.append(list(list(hal_dict_matrix.values())[i].values()))
+    return hal_matrix,list(hal_dict_matrix.keys())
+
+def hal_to_symmetric(hal_matrix):
+    return hal_matrix + np.transpose(hal_matrix)
+
+def document_vector(hal_matrix_symmetric):
+    n_words = len(hal_matrix_symmetric)
+    doc_vector = np.array([0]*n_words)
+    for i in range(n_words):
+        doc_vector[i] = sum(hal_matrix_symmetric[i])
+    return doc_vector
+
+def extract_word_vector(hal_matrix_symmetric,words_list,word_to_extract):
+    word_position = words_list.index(word_to_extract)
+    return hal_matrix_symmetric[word_position]
+
+def normalize_vector(word_vector):
+    if np.linalg.norm(word_vector) == 0:
+        return word_vector
+    else:
+        return word_vector/(np.linalg.norm(word_vector))
+
+def base_from_word_vectors(word_vector_normalised,word_vector_normalised2):
+    word_vector_ort = word_vector_normalised2 - np.dot(word_vector_normalised2,word_vector_normalised)*word_vector_normalised
+    word_vector_normalised_ort = normalize_vector(word_vector_ort)
+    return word_vector_normalised,word_vector_normalised_ort
+
+def project_doc_onto_base(base_vector1,base_vector2,document_vector):
+    
+    alpha = np.dot(base_vector1,document_vector)
+    alpha_ort = np.dot(base_vector2,document_vector)
+    normalisation_factor = np.sqrt(alpha**2+alpha_ort**2)
+    return alpha/normalisation_factor,alpha_ort/normalisation_factor
+
+def B_matrices(base_vector1,word_vector_normed2):
+    p = np.dot(base_vector1,word_vector_normed2)
+    B_mat = np.array([[2*p**2-1 ,2*p*np.sqrt(1-p**2)],[2*p*np.sqrt(1-p**2),1-2*p**2]])
+    B_mat_x = np.array([[-2*p*np.sqrt(1-p**2),2*p**2-1],[2*p**2-1,2*p*np.sqrt(1-p**2)]])
+    B_mat_plus = -(B_mat+B_mat_x)/np.sqrt(2)
+    B_mat_minus = (B_mat-B_mat_x)/np.sqrt(2)
+    return B_mat_plus,B_mat_minus
+
+def esp(alpha,alpha_ort,matrix):
+    document_vector = np.array([alpha,alpha_ort])
+    return np.dot(document_vector, np.matmul(matrix,document_vector))
+
+def S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort):
+    esp_A_Bplus = esp(alpha,alpha_ort,np.matmul(A_mat,B_mat_plus))
+    esp_Ax_Bplus = esp(alpha,alpha_ort,np.matmul(A_mat_x,B_mat_plus))
+    esp_A_Bminus = esp(alpha,alpha_ort,np.matmul(A_mat,B_mat_minus))
+    esp_Ax_Bminus = esp(alpha,alpha_ort,np.matmul(A_mat_x,B_mat_minus))
+    return np.abs(esp_A_Bplus) + np.abs(esp_Ax_Bplus) + np.abs(esp_A_Bminus) - np.abs(esp_Ax_Bminus)
+
+
+def Bell_l(document, word1, word2, window_size):
+    hal_dict_matrix = create_HAL_matrix(document)
+    hal_dict_matrix = fill_HAL_matrix(document,hal_dict_matrix, window_size)
+    hal_matrix, words_list= hal_dict_to_matrix(hal_dict_matrix)
+    hal_matrix_symmetric= hal_to_symmetric(hal_matrix)
+    doc_vector = document_vector(hal_matrix_symmetric)
+    word_vector_1 = extract_word_vector(hal_matrix_symmetric,words_list, word1)
+    word_vector_2 = extract_word_vector(hal_matrix_symmetric,words_list, word2)
+    word_vector_normed_1 = normalize_vector(word_vector_1)
+    word_vector_normed_2 = normalize_vector(word_vector_2)
+    base_vector_1,base_vector_2 = base_from_word_vectors(word_vector_normed_1,word_vector_normed_2)
+    alpha, alpha_ort = project_doc_onto_base(base_vector_1,base_vector_2,doc_vector)
+    B_mat_plus, B_mat_minus = B_matrices(base_vector_1,word_vector_normed_2)
+    A_mat = [[1,0],[0,-1]]
+    A_mat_x = [[0,1],[1,0]]
+    return S_query(A_mat,A_mat_x,B_mat_plus,B_mat_minus,alpha,alpha_ort)
+
+def Bell(document, word1, word2, min, max):
+    X = []
+    Y = []
+    for l in range(min, max):
+        X.append(l)
+        Y.append(Bell_l(document, word1, word2, l))
+    return X, Y
+
+def def_Bell_score(X,Y):
+    i=0
+    while i < len(X):
+        if Y[i]>1.9:
+            return 4*X[-1]/X[i]
+        else: 
+            i+=1
+    return 1
+
+def tfidfxbell(word1, word2, document, corpus, min, max, method):
+    if word1 in document and word2 in document:
+        X, Y = Bell(document, word1, word2, min, max)
+        if method == 0:
+            return (tfidf(word1, document, corpus)+ tfidf(word2, document, corpus))
+        if method == 1:
+            return (tfidf(word1, document, corpus)+ tfidf(word2, document, corpus))*def_Bell_score(X, Y)
+        
+    else: 
+        return tfidf(word1, document, corpus)+ tfidf(word2, document, corpus)
+
+
+with open('wikipedia_documents_cleaned.json', 'r') as f:
+    corpus = json.load(f)
+
+page_titles = ['Orange (fruit)', 'Orange S.A.', 'Orange (colour)', 'Spring (season)', 'Spring (device)']
+
+def ranking(word1, word2, corpus, min, max, method):
+    print(' ')
+    print('query words : ', word1, word2)
+    print(' ')
+    rank = []
+    for i in range(len(corpus)):
+        rank.append([page_titles[i], tfidfxbell(word1, word2, corpus[i], corpus, min, max, method)])
+    rank = sorted(rank, key=lambda x: x[-1], reverse=True)
+    for i in range(len(rank)):
+        print('rank ', i+1, ': Page', rank[i][0])
+        print(' ')
+        print('TF-IDF x Bell score : ', rank[i][1])
+        print(' ')
+
+ranking('spring', 'season', corpus, 1, 100, 1)
